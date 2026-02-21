@@ -1,16 +1,33 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Home, User, LogOut } from "lucide-react"
 
 export function Navbar() {
+  const router = useRouter()
   const pathname = usePathname()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const activeTab =
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "recommend"
       ? "recommend"
       : "missions"
   const isHome = pathname === "/"
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken") ?? ""
+    setIsLoggedIn(Boolean(token))
+  }, [pathname])
+
+  const logout = () => {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("username")
+    setIsLoggedIn(false)
+    router.push("/login")
+  }
 
   return (
     <nav className="sticky top-0 z-20 flex items-center justify-between bg-card px-5 py-3 border-b border-border">
@@ -43,20 +60,33 @@ export function Navbar() {
         )}
       </div>
       <div className="flex items-center gap-3">
-        <Link
-          href="/mypage"
-          className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
-        >
-          <User className="h-4 w-4" />
-          <span>{"마이페이지"}</span>
-        </Link>
-        <Link
-          href="/login"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground"
-          aria-label="로그아웃"
-        >
-          <LogOut className="h-4 w-4" />
-        </Link>
+        {isLoggedIn ? (
+          <>
+            <Link
+              href="/mypage"
+              className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
+            >
+              <User className="h-4 w-4" />
+              <span>{"마이페이지"}</span>
+            </Link>
+            <button
+              type="button"
+              onClick={logout}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground"
+              aria-label="로그아웃"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground"
+          >
+            <User className="h-4 w-4" />
+            <span>{"로그인"}</span>
+          </Link>
+        )}
       </div>
     </nav>
   )
